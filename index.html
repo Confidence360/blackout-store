@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BLACKOUT - Product Selector</title>
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0f1a">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 10px;
+      background: #0f0f1a;
+      color: #ffffff;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header img {
+      width: 120px;
+      border-radius: 10px;
+    }
+    header h1 {
+      margin: 10px 0 5px;
+      color: #00baff;
+    }
+    .product {
+      background: #1a1a2e;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      margin: 10px 0;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.3s, border 0.3s;
+    }
+    .product img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 10px;
+    }
+    .product.selected {
+      border: 2px solid #00baff;
+      background: #112240;
+    }
+    .info {
+      flex-grow: 1;
+    }
+    .price {
+      font-weight: bold;
+      color: #00baff;
+    }
+    .total {
+      font-size: 1.2em;
+      margin-top: 20px;
+      text-align: right;
+      font-weight: bold;
+    }
+    #upload-section {
+      margin: 15px 0;
+      text-align: center;
+    }
+    label {
+      color: #ddd;
+    }
+    #selected-names {
+      font-size: 1em;
+      color: #ccc;
+      margin-top: 5px;
+      text-align: right;
+    }
+    input[type="file"] {
+      background: #1a1a2e;
+      border: 1px solid #00baff;
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/..." alt="Logo" />
+    <h1>BLACKOUT - Product Selector</h1>
+  </header>
+
+  <div id="upload-section">
+    <label for="csvUpload">Upload Products CSV:</label>
+    <input type="file" id="csvUpload" accept=".csv">
+  </div>
+
+  <div id="product-list"></div>
+  <div class="total">Total: <span id="total-price">$0</span></div>
+  <div id="selected-names">Selected: None</div>
+
+  <script>
+    let products = [
+      { name: "Orange Juice", price: 5, image: "https://via.placeholder.com/100?text=OJ" },
+      { name: "Coctale#50", price: 5, image: "https://via.placeholder.com/100?text=C50" },
+      { name: "Mango", price: 5, image: "https://via.placeholder.com/100?text=Mango" },
+      { name: "Vodka", price: 5, image: "https://via.placeholder.com/100?text=Vodka" },
+      { name: "Peach", price: 5, image: "https://via.placeholder.com/100?text=Peach" },
+      { name: "Corona", price: 5, image: "https://via.placeholder.com/100?text=Corona" },
+      { name: "Whiskey", price: 5, image: "https://via.placeholder.com/100?text=Whiskey" },
+      { name: "Budwiser", price: 5, image: "https://via.placeholder.com/100?text=Budwiser" },
+    ];
+
+    const productList = document.getElementById('product-list');
+    const totalPriceEl = document.getElementById('total-price');
+    const selectedNamesEl = document.getElementById('selected-names');
+    const csvUpload = document.getElementById('csvUpload');
+    let selectedProducts = [];
+
+    function renderProducts() {
+      productList.innerHTML = '';
+      products.forEach((product) => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `
+          <img src="${product.image}" alt="${product.name}" />
+          <div class="info">
+            <div>${product.name}</div>
+            <div class="price">$${product.price}</div>
+          </div>
+        `;
+        div.addEventListener('click', () => toggleSelection(product, div));
+        productList.appendChild(div);
+      });
+    }
+
+    function toggleSelection(product, divElement) {
+      const index = selectedProducts.findIndex(p => p.name === product.name);
+      if (index > -1) {
+        selectedProducts.splice(index, 1);
+        divElement.classList.remove('selected');
+      } else {
+        selectedProducts.push(product);
+        divElement.classList.add('selected');
+      }
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const total = selectedProducts.reduce((sum, p) => sum + parseFloat(p.price), 0);
+      const names = selectedProducts.map(p => p.name).join(', ') || 'None';
+      totalPriceEl.textContent = `$${total}`;
+      selectedNamesEl.textContent = `Selected: ${names}`;
+    }
+
+    function parseCSV(text) {
+      const lines = text.split('\n').filter(Boolean);
+      const [header, ...rows] = lines;
+      return rows.map(row => {
+        const [name, price, image] = row.split(',').map(cell => cell.trim());
+        return { name, price: parseFloat(price), image };
+      });
+    }
+
+    csvUpload.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const csvText = e.target.result;
+        products = parseCSV(csvText);
+        selectedProducts = [];
+        updateSummary();
+        renderProducts();
+      };
+      reader.readAsText(file);
+    });
+
+    renderProducts();
+  </script>
+</body>
+</html>
