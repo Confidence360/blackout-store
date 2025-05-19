@@ -1,11 +1,11 @@
-Item,Price,image,
-Coca-Cola,10,Coca-Cola.jpg
-Corona,20,corona.jpg
-Budweiser,20,budweiser.jpg
-Franziskaner,20,franziskaner.jpg
-OJ 8.5%,30,OJ 8.5%.jpg
-OJ 10%,35,OJ 10%.jpg
-OJ 12%,35,OJ 12%.jpg
-OJ 14%,40,OJ 14%.jpg
-OJ 16%,40,OJ 16%.jpg
-OJ 18%,40,OJ 18%.jpg
+name,price,image
+Coca-Cola,10,./images/Coca-Cola.jpg
+Corona,20,./images/corona.jpg
+Budweiser,20,./images/budweiser.jpg
+Franziskaner,20,./images/franziskaner.jpg
+OJ 8.5%,30,./images/OJ 8.5%.jpg
+OJ 10%,35,./images/OJ 10%.jpg
+OJ 12%,35,./images/OJ 12%.jpg
+OJ 14%,40,./images/OJ 14%.jpg
+OJ 16%,40,./images/OJ 16%.jpg
+OJ 18%,40,./images/OJ 18%.jpg
