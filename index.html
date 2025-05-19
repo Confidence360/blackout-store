@@ -14,6 +14,9 @@
       background: #0f0f1a;
       color: #ffffff;
       transition: background 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
     }
     body.light-mode {
       background: #f4f4f4;
@@ -31,6 +34,12 @@
       margin: 10px 0 5px;
       color: #00baff;
     }
+    .sidebar {
+      width: 250px;
+    }
+    .main {
+      flex-grow: 1;
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -41,7 +50,6 @@
       border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.4);
       padding: 10px;
-      cursor: pointer;
       transition: background 0.3s, border 0.3s;
       display: flex;
       flex-direction: column;
@@ -68,14 +76,12 @@
     .total {
       font-size: 1.2em;
       margin-top: 20px;
-      text-align: right;
       font-weight: bold;
     }
     #selected-names {
       font-size: 1em;
       color: #ccc;
       margin-top: 5px;
-      text-align: right;
     }
     .actions {
       margin-top: 20px;
@@ -93,24 +99,40 @@
       font-weight: bold;
     }
     .quantity {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       margin-top: 10px;
+    }
+    .quantity button {
+      width: 25px;
+      height: 25px;
+      background: #00baff;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="images/logo.png" alt="Logo" />
-    <h1>BLACKOUT - Product Selector</h1>
-  </header>
-
-  <div class="actions">
-    <button onclick="clearSelection()">Clear Selection</button>
-    <button onclick="toggleTheme()">Toggle Light/Dark</button>
+  <div class="sidebar">
+    <header>
+      <img src="images/logo.png" alt="Logo" />
+      <h1>BLACKOUT</h1>
+    </header>
+    <div class="actions">
+      <button onclick="clearSelection()">Clear</button>
+      <button onclick="toggleTheme()">Light/Dark</button>
+    </div>
+    <div class="total">Total: <span id="total-price">$0</span></div>
+    <div id="selected-names">Selected: None</div>
   </div>
-
-  <div id="product-list" class="grid"></div>
-  <div class="total">Total: <span id="total-price">$0</span></div>
-  <div id="selected-names">Selected: None</div>
+  <div class="main">
+    <div id="product-list" class="grid"></div>
+  </div>
 
   <script>
     let products = [];
@@ -126,44 +148,38 @@
         div.className = 'product';
         if (selectedProducts.some(p => p.name === product.name)) div.classList.add('selected');
 
-        const quantity = selectedProducts.find(p => p.name === product.name)?.quantity || 1;
+        const selectedItem = selectedProducts.find(p => p.name === product.name);
+        const quantity = selectedItem?.quantity || 0;
 
         div.innerHTML = `
-          <img src="https://raw.githubusercontent.com/Confidence360/blackout-store/main/images/${product.image}" alt="${product.name}" />
+          <img src="https://raw.githubusercontent.com/Confidence360/blackout-store/main/${product.image}" alt="${product.name}" />
           <div class="info">
             <div>${product.name}</div>
             <div class="price">$${product.price}</div>
             <div class="quantity">
-              Quantity: <input type="number" value="${quantity}" min="1" onchange="updateQuantity('${product.name}', this.value)" style="width: 60px" />
+              <button onclick="changeQuantity('${product.name}', -1)">-</button>
+              <span>${quantity}</span>
+              <button onclick="changeQuantity('${product.name}', 1)">+</button>
             </div>
           </div>
         `;
-        div.addEventListener('click', (e) => {
-          if (!e.target.matches('input')) toggleSelection(product, div);
-        });
         productList.appendChild(div);
       });
       updateSummary();
     }
 
-    function toggleSelection(product, divElement) {
-      const index = selectedProducts.findIndex(p => p.name === product.name);
+    function changeQuantity(name, delta) {
+      const index = selectedProducts.findIndex(p => p.name === name);
       if (index > -1) {
-        selectedProducts.splice(index, 1);
-        divElement.classList.remove('selected');
-      } else {
+        selectedProducts[index].quantity += delta;
+        if (selectedProducts[index].quantity < 1) {
+          selectedProducts.splice(index, 1);
+        }
+      } else if (delta > 0) {
+        const product = products.find(p => p.name === name);
         selectedProducts.push({...product, quantity: 1});
-        divElement.classList.add('selected');
       }
       saveSelection();
-    }
-
-    function updateQuantity(name, quantity) {
-      const item = selectedProducts.find(p => p.name === name);
-      if (item) {
-        item.quantity = parseInt(quantity);
-        saveSelection();
-      }
     }
 
     function clearSelection() {
