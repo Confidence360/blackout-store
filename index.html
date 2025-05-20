@@ -141,8 +141,17 @@
     const selectedNamesEl = document.getElementById('selected-names');
     let selectedProducts = JSON.parse(localStorage.getItem('selectedProducts') || '[]');
 
+    function preloadImages(imageUrls) {
+      imageUrls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+      });
+    }
+
     function renderProducts() {
       productList.innerHTML = '';
+      const imageUrls = [];
+
       products.forEach((product) => {
         const div = document.createElement('div');
         div.className = 'product';
@@ -151,8 +160,11 @@
         const selectedItem = selectedProducts.find(p => p.name === product.name);
         const quantity = selectedItem?.quantity || 0;
 
+        const imageUrl = `https://raw.githubusercontent.com/Confidence360/blackout-store/main/${product.image}`;
+        imageUrls.push(imageUrl);
+
         div.innerHTML = `
-          <img src="https://raw.githubusercontent.com/Confidence360/blackout-store/main/${product.image}" alt="${product.name}" onerror="this.src='images/fallback.png'" />
+          <img src="${imageUrl}" alt="${product.name}" onerror="this.src='images/fallback.png'" />
           <div class="info">
             <div>${product.name}</div>
             <div class="price">$${product.price.toFixed(2)}</div>
@@ -165,6 +177,8 @@
         `;
         productList.appendChild(div);
       });
+
+      preloadImages(imageUrls);
       updateSummary();
     }
 
