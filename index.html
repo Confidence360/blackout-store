@@ -125,6 +125,7 @@
       border: none;
       color: #888;
       font-size: 10px;
+      cursor: pointer;
     }
   </style>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -137,8 +138,8 @@
         <h1>BLACKOUT</h1>
       </header>
       <div class="actions">
-        <button onclick="clearSelection()"><i class="fas fa-eraser"></i> Clear Selection</button>
-        <button onclick="toggleTheme()"><i class="fas fa-adjust"></i> Toggle Theme</button>
+        <button type="button" onclick="clearSelection()"><i class="fas fa-eraser"></i> Clear Selection</button>
+        <button type="button" onclick="toggleTheme()"><i class="fas fa-adjust"></i> Toggle Theme</button>
       </div>
       <div class="total">Total: <span id="total-price">$0.00</span></div>
       <div id="selected-names">Selected: None</div>
@@ -153,13 +154,14 @@
       <div class="admin-panel" id="adminPanel">
         <h3>Admin Panel - Edit CSV</h3>
         <textarea id="csvEditor"></textarea>
-        <button onclick="applyCSVChanges()">Apply Changes</button>
-        <button onclick="refreshCSV()">Refresh CSV from GitHub</button>
+        <button type="button" onclick="applyCSVChanges()">Apply Changes</button>
+        <button type="button" onclick="refreshCSV()">Refresh CSV from GitHub</button>
       </div>
     </div>
   </div>
-  <button id="adminTrigger" onclick="document.getElementById('adminPanel').style.display = 'block'"></button>
-  <div id="toast" class="toast">Fallback to cached CSV data</div>
+  <button id="adminTrigger" onclick="document.getElementById('adminPanel').style.display = 'block'">Admin</button>
+  <div id="toast" class="toast" role="alert">Fallback to cached CSV data</div>
+
   <script>
     let products = [], selection = {};
 
@@ -179,7 +181,7 @@
         headers.forEach((h, i) => {
           const key = h.trim();
           const value = values[i]?.trim();
-          entry[key] = key.toLowerCase() === "price" ? parseFloat(value) : value;
+          entry[key] = key.toLowerCase() === "price" ? (parseFloat(value) || 0) : value;
         });
         return entry;
       });
@@ -199,37 +201,55 @@
 
         const div = document.createElement("div");
         div.className = "product";
+
         const img = document.createElement("img");
         img.loading = "lazy";
         img.src = p.image;
-        img.alt = p.name;
+        img.alt = p.name || "Product Image";
         img.onerror = () => { img.src = 'images/fallback.jpg'; };
+
         const name = document.createElement("div");
         name.className = "product-name";
         name.textContent = p.name;
+
         const price = document.createElement("div");
         price.className = "product-price";
         price.textContent = `$${p.price}`;
+
         const desc = document.createElement("div");
         desc.className = "product-desc";
         desc.textContent = p.description || "No description.";
 
         const controls = document.createElement("div");
         controls.className = "product-controls";
+
         const btnMinus = document.createElement("button");
         btnMinus.textContent = "−";
-        btnMinus.onclick = () => adjustSelection(p.name, -1);
+        btnMinus.type = "button";
+
         const countSpan = document.createElement("span");
         countSpan.textContent = selection[p.name] || 0;
+        countSpan.id = `count-${p.name.replace(/\s+/g, '-')}`;
+
         const btnPlus = document.createElement("button");
         btnPlus.textContent = "+";
-        btnPlus.onclick = () => adjustSelection(p.name, 1);
-        controls.append(btnMinus, countSpan, btnPlus);
+        btnPlus.type = "button";
 
+        btnMinus.onclick = () => {
+          adjustSelection(p.name, -1);
+          countSpan.textContent = selection[p.name] || 0;
+        };
+        btnPlus.onclick = () => {
+          adjustSelection(p.name, 1);
+          countSpan.textContent = selection[p.name] || 0;
+        };
+
+        controls.append(btnMinus, countSpan, btnPlus);
         div.append(img, name, price, desc, controls);
         list.appendChild(div);
         count++;
       }
+
       if (count === 0) list.innerHTML = '<p style="color:#ccc">No products available</p>';
     }
 
@@ -237,7 +257,6 @@
       selection[name] = (selection[name] || 0) + delta;
       if (selection[name] < 0) selection[name] = 0;
       updateSidebar();
-      renderProducts();
     }
 
     function updateSidebar() {
@@ -308,6 +327,15 @@
       if (csvText) {
         document.getElementById('csvEditor').value = csvText.trim();
       }
+    }
+
+    function applyCSVChanges() {
+      const newCSV = document.getElementById('csvEditor').value;
+      localStorage.setItem('cachedCSV', newCSV);
+      products = parseCSV(newCSV);
+      renderProducts();
+      updateSidebar();
+      showToast("CSV changes applied.");
     }
 
     applyInitialTheme();
