@@ -90,6 +90,7 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      margin-right: 10px;
     }
     .toast {
       display: none;
@@ -131,6 +132,7 @@
         <h3>Admin Panel - Edit CSV</h3>
         <textarea id="csvEditor"></textarea>
         <button onclick="applyCSVChanges()">Apply Changes</button>
+        <button onclick="refreshCSV()">Refresh CSV from GitHub</button>
       </div>
     </div>
   </div>
@@ -175,6 +177,7 @@
         const div = document.createElement("div");
         div.className = "product";
         const img = document.createElement("img");
+        img.loading = "lazy";
         img.src = p.image;
         img.alt = p.name;
         img.onerror = () => { img.src = 'images/fallback.jpg'; };
@@ -240,6 +243,12 @@
           document.getElementById("product-list").innerHTML = `<p style="color:red;">Failed to load product list. Please check your connection or try again later.</p>`;
         }
       }
+    }
+
+    function refreshCSV() {
+      localStorage.removeItem('cachedCSV');
+      loadCSVFromGitHub();
+      showToast("CSV reloaded from GitHub");
     }
 
     function clearSelection() {
