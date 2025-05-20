@@ -106,6 +106,7 @@
       object-fit: cover;
       border-radius: 8px;
       margin-bottom: 10px;
+      transition: opacity 0.3s ease-in-out;
     }
     .quantity {
       display: flex;
@@ -191,6 +192,7 @@
 
       products
         .filter(p => p.name.toLowerCase().includes(searchValue) && p.price >= minPrice && p.price <= maxPrice)
+        .sort((a, b) => a.price - b.price) // Sort by price low to high
         .forEach(product => {
           const div = document.createElement('div');
           div.className = 'product';
@@ -202,8 +204,16 @@
           const imageUrl = `https://raw.githubusercontent.com/Confidence360/blackout-store/main/${product.image}`;
           imageUrls.push(imageUrl);
 
-          div.innerHTML = `
-            <img src="${imageUrl}" alt="${product.name}" onerror="this.src='images/fallback.png'" />
+          const imgTag = document.createElement('img');
+          imgTag.src = imageUrl;
+          imgTag.alt = product.name;
+          imgTag.loading = 'lazy';
+          imgTag.onerror = function() {
+            this.src = 'images/fallback.png';
+          };
+
+          div.appendChild(imgTag);
+          div.innerHTML += `
             <div>${product.name}</div>
             <div class="price">$${product.price.toFixed(2)}</div>
             <div class="quantity">
@@ -212,6 +222,7 @@
               <button onclick="changeQuantity('${product.name}', 1)">+</button>
             </div>
           `;
+
           productList.appendChild(div);
         });
 
