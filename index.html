@@ -8,7 +8,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f0f1a">
   <style>
-    /* Responsive Layout Fix */
     body, html {
       margin: 0;
       padding: 0;
@@ -50,6 +49,8 @@
       height: 120px;
       object-fit: cover;
       border-radius: 8px;
+      transition: opacity 0.3s ease-in-out;
+      background: #111;
     }
     .product-name {
       font-weight: bold;
@@ -67,6 +68,7 @@
       padding: 10px;
       background: #1a1a2e;
       border-radius: 10px;
+      display: none;
     }
     .admin-panel textarea {
       width: 100%;
@@ -88,6 +90,18 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+    }
+    .toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #444;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
     }
   </style>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -113,7 +127,7 @@
         <input type="number" id="maxPrice" placeholder="Max price" oninput="renderProducts()">
       </div>
       <div class="grid" id="product-list"></div>
-      <div class="admin-panel">
+      <div class="admin-panel" id="adminPanel">
         <h3>Admin Panel - Edit CSV</h3>
         <textarea id="csvEditor"></textarea>
         <button onclick="applyCSVChanges()">Apply Changes</button>
@@ -137,7 +151,11 @@
       return lines.slice(1).map(line => {
         const values = line.split(",");
         const entry = {};
-        headers.forEach((h, i) => entry[h.trim()] = values[i]?.trim());
+        headers.forEach((h, i) => {
+          const key = h.trim();
+          const value = values[i]?.trim();
+          entry[key] = key.toLowerCase() === "price" ? parseFloat(value) : value;
+        });
         return entry;
       });
     }
@@ -201,7 +219,7 @@
     }
 
     async function loadCSVFromGitHub() {
-      const CSV_URL = 'https://raw.githubusercontent.com/Confidence360/blackout-store/main/products.csv';
+      const CSV_URL = 'https://confidence360.github.io/blackout-store/products.csv';
       try {
         const response = await fetch(CSV_URL);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -230,16 +248,28 @@
 
     function toggleTheme() {
       document.body.classList.toggle("dark");
+      localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
     }
 
     function applyInitialTheme() {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme) {
+        document.body.classList.toggle("dark", storedTheme === "dark");
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.body.classList.add("dark");
+      }
+    }
+
+    function checkAdminAccess() {
+      const password = prompt("Enter admin password:");
+      if (password === "blackout123") {
+        document.getElementById("adminPanel").style.display = "block";
       }
     }
 
     applyInitialTheme();
     loadCSVFromGitHub();
+    checkAdminAccess();
   </script>
 </body>
 </html>
