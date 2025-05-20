@@ -127,7 +127,7 @@
       <button onclick="clearSelection()">Clear</button>
       <button onclick="toggleTheme()">Light/Dark</button>
     </div>
-    <div class="total">Total: <span id="total-price">$0</span></div>
+    <div class="total">Total: <span id="total-price">$0.00</span></div>
     <div id="selected-names">Selected: None</div>
   </div>
   <div class="main">
@@ -152,10 +152,10 @@
         const quantity = selectedItem?.quantity || 0;
 
         div.innerHTML = `
-          <img src="https://raw.githubusercontent.com/Confidence360/blackout-store/main/${product.image}" alt="${product.name}" />
+          <img src="https://raw.githubusercontent.com/Confidence360/blackout-store/main/${product.image}" alt="${product.name}" onerror="this.src='images/fallback.png'" />
           <div class="info">
             <div>${product.name}</div>
-            <div class="price">$${product.price}</div>
+            <div class="price">$${product.price.toFixed(2)}</div>
             <div class="quantity">
               <button onclick="changeQuantity('${product.name}', -1)">-</button>
               <span>${quantity}</span>
@@ -195,7 +195,7 @@
     function updateSummary() {
       const total = selectedProducts.reduce((sum, p) => sum + parseFloat(p.price) * p.quantity, 0);
       const names = selectedProducts.map(p => `${p.name} (x${p.quantity})`).join(', ') || 'None';
-      totalPriceEl.textContent = `$${total}`;
+      totalPriceEl.textContent = `$${total.toFixed(2)}`;
       selectedNamesEl.textContent = `Selected: ${names}`;
     }
 
