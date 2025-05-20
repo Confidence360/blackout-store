@@ -15,6 +15,7 @@
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
       display: flex;
+      flex-direction: column;
       min-height: 100vh;
       background: #0f0f1a;
       color: #ffffff;
@@ -23,6 +24,10 @@
     body.light-mode {
       background: #f4f4f4;
       color: #000000;
+    }
+    .container {
+      display: flex;
+      flex: 1;
     }
     .sidebar {
       background: #121a26;
@@ -108,6 +113,11 @@
       margin-bottom: 10px;
       transition: opacity 0.3s ease-in-out;
     }
+    .product-description {
+      font-size: 13px;
+      color: #ccc;
+      margin-bottom: 10px;
+    }
     .quantity {
       display: flex;
       justify-content: center;
@@ -141,29 +151,42 @@
     .toast.show {
       opacity: 1;
     }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <header>
-      <img src="images/logo.png" alt="Logo">
-      <h1>BLACKOUT</h1>
-    </header>
-    <div class="actions">
-      <button onclick="clearSelection()">Clear Selection</button>
-      <button onclick="toggleTheme()">Toggle Theme</button>
+  <div class="container">
+    <div class="sidebar">
+      <header>
+        <img src="images/logo.png" alt="Logo">
+        <h1>BLACKOUT</h1>
+      </header>
+      <div class="actions">
+        <button onclick="clearSelection()">Clear Selection</button>
+        <button onclick="toggleTheme()">Toggle Theme</button>
+      </div>
+      <div class="total">Total: <span id="total-price">$0.00</span></div>
+      <div id="selected-names">Selected: None</div>
     </div>
-    <div class="total">Total: <span id="total-price">$0.00</span></div>
-    <div id="selected-names">Selected: None</div>
-  </div>
 
-  <div class="main">
-    <div class="filters">
-      <input type="text" id="search" placeholder="Search products..." oninput="renderProducts()">
-      <input type="number" id="minPrice" placeholder="Min price" oninput="renderProducts()">
-      <input type="number" id="maxPrice" placeholder="Max price" oninput="renderProducts()">
+    <div class="main">
+      <div class="filters">
+        <input type="text" id="search" placeholder="Search products..." oninput="renderProducts()">
+        <input type="number" id="minPrice" placeholder="Min price" oninput="renderProducts()">
+        <input type="number" id="maxPrice" placeholder="Max price" oninput="renderProducts()">
+      </div>
+      <div class="grid" id="product-list"></div>
     </div>
-    <div class="grid" id="product-list"></div>
   </div>
 
   <div id="toast" class="toast">Fallback to cached CSV data</div>
@@ -192,7 +215,7 @@
 
       products
         .filter(p => p.name.toLowerCase().includes(searchValue) && p.price >= minPrice && p.price <= maxPrice)
-        .sort((a, b) => a.price - b.price) // Sort by price low to high
+        .sort((a, b) => a.price - b.price)
         .forEach(product => {
           const div = document.createElement('div');
           div.className = 'product';
@@ -215,6 +238,7 @@
           div.appendChild(imgTag);
           div.innerHTML += `
             <div>${product.name}</div>
+            <div class="product-description">${product.description || 'No description available.'}</div>
             <div class="price">$${product.price.toFixed(2)}</div>
             <div class="quantity">
               <button onclick="changeQuantity('${product.name}', -1)">-</button>
@@ -265,8 +289,13 @@
       const lines = text.split('\n').filter(Boolean);
       const [header, ...rows] = lines;
       return rows.map(row => {
-        const [name, price, image] = row.split(',').map(cell => cell.trim());
-        return { name, price: parseFloat(price), image };
+        const [name, price, image, description = `Description for ${name}`] = row.split(',').map(cell => cell.trim());
+        return {
+          name,
+          price: parseFloat(price),
+          image,
+          description
+        };
       });
     }
 
