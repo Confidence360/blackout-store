@@ -68,6 +68,12 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .actions button i {
+      margin-right: 8px;
     }
     .total, #selected-names {
       margin-top: 20px;
@@ -163,6 +169,7 @@
       }
     }
   </style>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <div class="container">
@@ -172,13 +179,12 @@
         <h1>BLACKOUT</h1>
       </header>
       <div class="actions">
-        <button onclick="clearSelection()">Clear Selection</button>
-        <button onclick="toggleTheme()">Toggle Theme</button>
+        <button onclick="clearSelection()"><i class="fas fa-eraser"></i>Clear Selection</button>
+        <button onclick="toggleTheme()"><i class="fas fa-adjust"></i>Toggle Theme</button>
       </div>
       <div class="total">Total: <span id="total-price">$0.00</span></div>
       <div id="selected-names">Selected: None</div>
     </div>
-
     <div class="main">
       <div class="filters">
         <input type="text" id="search" placeholder="Search products..." oninput="renderProducts()">
@@ -188,9 +194,7 @@
       <div class="grid" id="product-list"></div>
     </div>
   </div>
-
   <div id="toast" class="toast">Fallback to cached CSV data</div>
-
   <script>
     let products = [];
     const productList = document.getElementById('product-list');
@@ -203,6 +207,19 @@
         const img = new Image();
         img.src = url;
       });
+    }
+
+    function applyInitialTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const shouldUseLight = savedTheme === 'light' || (!savedTheme && !prefersDark);
+      document.body.classList.toggle('light-mode', shouldUseLight);
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+      const isLight = document.body.classList.contains('light-mode');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
     }
 
     function renderProducts() {
@@ -308,18 +325,15 @@
 
     async function loadCSVFromGitHub() {
       const CSV_URL = 'https://raw.githubusercontent.com/Confidence360/blackout-store/main/products.csv';
-
       try {
         const response = await fetch(CSV_URL);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
         const text = await response.text();
         localStorage.setItem('cachedCSV', text);
         products = parseCSV(text);
         renderProducts();
       } catch (error) {
         console.error('Failed to load CSV:', error);
-
         const cached = localStorage.getItem('cachedCSV');
         if (cached) {
           showToast('Using cached product data');
@@ -331,10 +345,7 @@
       }
     }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light-mode');
-    }
-
+    applyInitialTheme();
     loadCSVFromGitHub();
   </script>
 </body>
