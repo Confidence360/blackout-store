@@ -1,11 +1,11 @@
-name,price,image
-Coca-Cola,10,Coca-Cola.jpg
-Corona,20,corona.jpg
-Budweiser,20,budweiser.jpg
-Franziskaner,20,franziskaner.jpg
-OJ ,30,OJ-8.5.jpg
-OJ ,35,OJ-10.jpg
-OJ ,35,OJ-12.jpg
-OJ ,40,OJ-14.jpg
-OJ ,40,OJ-16.jpg
-OJ ,40,OJ-18.jpg
+name,price,image,description
+Coca-Cola,10,Coca-Cola.jpg,Classic refreshing soda.
+Corona,20,corona.jpg,Light Mexican beer with a crisp taste.
+Budweiser,20,budweiser.jpg,American lager known for its smoothness.
+Franziskaner,20,franziskaner.jpg,Traditional German wheat beer.
+OJ 8.5%,30,OJ-8.5.jpg,Fruity drink with 8.5% alcohol content.
+OJ 10%,35,OJ-10.jpg,Strong orange drink with 10% ABV.
+OJ 12%,35,OJ-12.jpg,Smooth and citrusy, 12% strength.
+OJ 14%,40,OJ-14.jpg,Powerful and zesty at 14%.
+OJ 16%,40,OJ-16.jpg,Fruity beverage with a bold 16% punch.
+OJ 18%,40,OJ-18.jpg,Highest strength orange drink at 18%.
