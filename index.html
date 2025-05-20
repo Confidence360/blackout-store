@@ -104,6 +104,308 @@
       border-radius: 5px;
       z-index: 1000;
     }
+    #adminTrigger {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 10px;
+    }
+  </style>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <header>
+        <img src="images/logo.png" alt="Logo" style="max-width:100px">
+        <h1>BLACKOUT</h1>
+      </header>
+      <div class="actions">
+        <button onclick="clearSelection()"><i class="fas fa-eraser"></i> Clear Selection</button>
+        <button onclick="toggleTheme()"><i class="fas fa-adjust"></i> Toggle Theme</button>
+      </div>
+      <div class="total">Total: <span id="total-price">$0.00</span></div>
+      <div id="selected-names">Selected: None</div>
+    </div>
+    <div class="main">
+      <div class="filters">
+        <input type="text" id="search" placeholder="Search products..." oninput="renderProducts()">
+        <input type="number" id="minPrice" placeholder="Min price" oninput="renderProducts()">
+        <input type="number" id="maxPrice" placeholder="Max price" oninput="renderProducts()">
+      </div>
+      <div class="grid" id="product-list"></div>
+      <div class="admin-panel" id="adminPanel">
+        <h3>Admin Panel - Edit CSV</h3>
+        <textarea id="csvEditor"></textarea>
+        <button onclick="applyCSVChanges()">Apply Changes</button>
+        <button onclick="refreshCSV()">Refresh CSV from GitHub</button>
+      </div>
+    </div>
+  </div>
+  <button id="adminTrigger" onclick="promptAdminAccess()">.</button>
+  <div id="toast" class="toast">Fallback to cached CSV data</div>
+  <script>
+    let products = [];
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.style.display = "block";
+      setTimeout(() => toast.style.display = "none", 3000);
+    }
+
+    function parseCSV(text) {
+      const lines = text.trim().split("\n");
+      const headers = lines[0].split(",");
+      return lines.slice(1).map(line => {
+        const values = line.split(",");
+        const entry = {};
+        headers.forEach((h, i) => {
+          const key = h.trim();
+          const value = values[i]?.trim();
+          entry[key] = key.toLowerCase() === "price" ? parseFloat(value) : value;
+        });
+        return entry;
+      });
+    }
+
+    function renderProducts() {
+      const list = document.getElementById("product-list");
+      const search = document.getElementById("search").value.toLowerCase();
+      const min = parseFloat(document.getElementById("minPrice").value) || 0;
+      const max = parseFloat(document.getElementById("maxPrice").value) || Infinity;
+      list.innerHTML = "";
+
+      let count = 0;
+      for (const p of products) {
+        const match = p.name.toLowerCase().includes(search) && p.price >= min && p.price <= max;
+        if (!match) continue;
+
+        const div = document.createElement("div");
+        div.className = "product";
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.src = p.image;
+        img.alt = p.name;
+        img.onerror = () => { img.src = 'images/fallback.jpg'; };
+        const name = document.createElement("div");
+        name.className = "product-name";
+        name.textContent = p.name;
+        const price = document.createElement("div");
+        price.className = "product-price";
+        price.textContent = `$${p.price}`;
+        const desc = document.createElement("div");
+        desc.className = "product-desc";
+        desc.textContent = p.description || "No description.";
+        div.append(img, name, price, desc);
+        list.appendChild(div);
+        count++;
+      }
+      if (count === 0) list.innerHTML = '<p style="color:#ccc">No products available</p>';
+    }
+
+    function populateCSVEditor() {
+      const csvText = localStorage.getItem('cachedCSV');
+      if (csvText) {
+        document.getElementById('csvEditor').value = csvText.trim();
+      }
+    }
+
+    function applyCSVChanges() {
+      const newCSV = document.getElementById('csvEditor').value;
+      try {
+        const parsed = parseCSV(newCSV);
+        if (parsed.length > 0) {
+          products = parsed;
+          localStorage.setItem('cachedCSV', newCSV);
+          renderProducts();
+          showToast('CSV updated successfully');
+        } else {
+          showToast('CSV update failed: No valid products');
+        }
+      } catch (e) {
+        showToast('Error parsing CSV');
+      }
+    }
+
+    async function loadCSVFromGitHub() {
+      const CSV_URL = 'https://confidence360.github.io/blackout-store/products.csv';
+      try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const text = await response.text();
+        localStorage.setItem('cachedCSV', text);
+        products = parseCSV(text);
+        renderProducts();
+        populateCSVEditor();
+      } catch (error) {
+        console.error('Failed to load CSV:', error);
+        const cached = localStorage.getItem('cachedCSV');
+        if (cached) {
+          showToast('Using cached product data');
+          products = parseCSV(cached);
+          renderProducts();
+          populateCSVEditor();
+        } else {
+          document.getElementById("product-list").innerHTML = `<p style="color:red;">Failed to load product list. Please check your connection or try again later.</p>`;
+        }
+      }
+    }
+
+    function refreshCSV() {
+      localStorage.removeItem('cachedCSV');
+      loadCSVFromGitHub();
+      showToast("CSV reloaded from GitHub");
+    }
+
+    function clearSelection() {
+      showToast("Selection cleared.");
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    function applyInitialTheme() {
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme) {
+        document.body.classList.toggle("dark", storedTheme === "dark");
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add("dark");
+      }
+    }
+
+    function promptAdminAccess() {
+      const password = prompt("Enter admin password:");
+      if (password === "blackout123") {
+        document.getElementById("adminPanel").style.display = "block";
+        showToast("Admin access granted");
+      } else {
+        showToast("Incorrect password");
+      }
+    }
+
+    applyInitialTheme();
+    loadCSVFromGitHub();
+
+    document.addEventListener("keydown", e => {
+      if (e.ctrlKey && e.altKey && e.key === "a") {
+        promptAdminAccess();
+      }
+    });
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BLACKOUT - Product Selector</title>
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0f1a">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #0f0f1a;
+      color: #fff;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+    }
+    @media(min-width: 768px) {
+      .container {
+        flex-direction: row;
+      }
+    }
+    .sidebar {
+      background: #1a1a2e;
+      padding: 20px;
+      flex-shrink: 0;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
+    }
+    .product {
+      background: #222;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .product img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      transition: opacity 0.3s ease-in-out;
+      background: #111;
+    }
+    .product-name {
+      font-weight: bold;
+      margin: 10px 0 5px;
+    }
+    .product-price {
+      color: #00ffcc;
+    }
+    .product-desc {
+      font-size: 0.9em;
+      margin: 5px 0;
+    }
+    .admin-panel {
+      margin: 20px 0;
+      padding: 10px;
+      background: #1a1a2e;
+      border-radius: 10px;
+      display: none;
+    }
+    .admin-panel textarea {
+      width: 100%;
+      height: 150px;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 14px;
+      background: #121a26;
+      color: white;
+      border: none;
+    }
+    .admin-panel button {
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #00baff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #444;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
+    }
   </style>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
